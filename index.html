@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Only load files from this site; no inline scripts, no third parties. -->
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#12161c">
+  <title>Teile-Alarm</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <img src="icon-192.png" alt="" width="48" height="48">
+      <div>
+        <h1>Teile-Alarm</h1>
+        <p class="sub">Push-Benachrichtigungen für neue Angebote</p>
+      </div>
+    </header>
+
+    <section class="card" id="status-card">
+      <h2>Status</h2>
+      <p id="status">Wird geprüft …</p>
+    </section>
+
+    <section class="card hidden" id="ios-hint">
+      <h2>iPhone/iPad</h2>
+      <p>Push geht auf iOS nur, wenn die Seite als App installiert ist:
+         Teilen-Symbol → <b>„Zum Home-Bildschirm“</b>, dann die App vom Home-Bildschirm aus öffnen.</p>
+    </section>
+
+    <section class="card" id="setup-card">
+      <h2>1. Benachrichtigungen aktivieren</h2>
+      <p>Einmal auf jedem Gerät, auf dem du Alarme bekommen willst.</p>
+      <button id="btn-enable" class="primary">Benachrichtigungen aktivieren</button>
+    </section>
+
+    <section class="card hidden" id="code-card">
+      <h2>2. Abo-Code zum PC bringen</h2>
+      <p>Diesen Code am PC mit <code>py -3.13 alarm.py --abo-hinzufuegen</code> einfügen.
+         Er ist nur zusammen mit deinem geheimen Schlüssel auf dem PC nutzbar,
+         trotzdem nicht öffentlich posten.</p>
+      <textarea id="code" readonly rows="6"></textarea>
+      <div class="row">
+        <button id="btn-copy">Kopieren</button>
+        <button id="btn-share" class="hidden">Teilen …</button>
+      </div>
+      <p class="small" id="copy-msg"></p>
+    </section>
+
+    <section class="card hidden" id="tools-card">
+      <h2>Werkzeuge</h2>
+      <div class="row">
+        <button id="btn-local-test">Anzeige testen</button>
+        <button id="btn-disable" class="danger">Abmelden</button>
+      </div>
+      <p class="small">„Anzeige testen“ prüft nur, ob dieses Gerät Benachrichtigungen anzeigt.
+         Ob der PC durchkommt, testest du mit <code>py -3.13 alarm.py --test-push</code>.</p>
+    </section>
+
+    <footer class="small">Keine Konten, keine Tracker. Diese Seite speichert nichts außer dem Push-Abo im Browser.</footer>
+  </main>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
