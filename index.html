@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Only load files from this site; no inline scripts, no third parties. -->
+  <!-- Only this site + the GitHub API; no inline scripts, no third parties. -->
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+        content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self' https://api.github.com; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#12161c">
   <title>Teile-Alarm</title>
@@ -17,54 +17,119 @@
 <body>
   <main>
     <header>
-      <img src="icon-192.png" alt="" width="48" height="48">
+      <img src="icon-192.png" alt="" width="44" height="44">
       <div>
         <h1>Teile-Alarm</h1>
-        <p class="sub">Push-Benachrichtigungen für neue Angebote</p>
+        <p class="sub">Neue Angebote für deine Teile</p>
       </div>
     </header>
 
-    <section class="card" id="status-card">
-      <h2>Status</h2>
-      <p id="status">Wird geprüft …</p>
-    </section>
+    <nav class="tabs">
+      <button id="tab-teile" class="tab active">Meine Teile</button>
+      <button id="tab-geraet" class="tab">Gerät &amp; Push</button>
+    </nav>
 
-    <section class="card hidden" id="ios-hint">
-      <h2>iPhone/iPad</h2>
-      <p>Push geht auf iOS nur, wenn die Seite als App installiert ist:
-         Teilen-Symbol → <b>„Zum Home-Bildschirm“</b>, dann die App vom Home-Bildschirm aus öffnen.</p>
-    </section>
+    <!-- ===================== Meine Teile ===================== -->
+    <div id="view-teile">
+      <section class="card hidden" id="connect-card">
+        <h2>Mit deiner Teileliste verbinden</h2>
+        <p>Einmal pro Gerät den GitHub-Zugangsschlüssel für <code id="repo-name"></code> eintragen
+           (Lesen + Schreiben). Er wird nur auf diesem Gerät gespeichert.</p>
+        <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…">
+        <button id="btn-connect" class="primary">Verbinden</button>
+      </section>
 
-    <section class="card" id="setup-card">
-      <h2>1. Benachrichtigungen aktivieren</h2>
-      <p>Einmal auf jedem Gerät, auf dem du Alarme bekommen willst.</p>
-      <button id="btn-enable" class="primary">Benachrichtigungen aktivieren</button>
-    </section>
-
-    <section class="card hidden" id="code-card">
-      <h2>2. Abo-Code zum PC bringen</h2>
-      <p>Diesen Code am PC mit <code>py -3.13 alarm.py --abo-hinzufuegen</code> einfügen.
-         Er ist nur zusammen mit deinem geheimen Schlüssel auf dem PC nutzbar,
-         trotzdem nicht öffentlich posten.</p>
-      <textarea id="code" readonly rows="6"></textarea>
-      <div class="row">
-        <button id="btn-copy">Kopieren</button>
-        <button id="btn-share" class="hidden">Teilen …</button>
+      <div id="parts-area" class="hidden">
+        <p class="msg" id="parts-msg"></p>
+        <div id="parts-list"></div>
+        <button id="btn-add" class="primary">+ Teil hinzufügen</button>
+        <p class="small center" id="parts-count"></p>
       </div>
-      <p class="small" id="copy-msg"></p>
-    </section>
 
-    <section class="card hidden" id="tools-card">
-      <h2>Werkzeuge</h2>
-      <div class="row">
-        <button id="btn-local-test">Anzeige testen</button>
-        <button id="btn-disable" class="danger">Abmelden</button>
-      </div>
-      <p class="small">„Anzeige testen“ prüft nur, ob dieses Gerät Benachrichtigungen anzeigt.
-         Ob der PC durchkommt, testest du mit <code>py -3.13 alarm.py --test-push</code>.</p>
-    </section>
+      <section class="card hidden" id="editor">
+        <h2 id="editor-title">Teil</h2>
+        <label>Name <span class="small">(steht in der Benachrichtigung)</span>
+          <input id="f-name" maxlength="80" placeholder="z. B. Sattel">
+        </label>
+        <label>Suchbegriff <span class="small">(wie in der eBay-Suche)</span>
+          <input id="f-suche" maxlength="100" placeholder="z. B. Brooks B17">
+        </label>
+        <div class="grid2">
+          <label>Zielpreis in €
+            <input id="f-preis" type="text" inputmode="decimal" maxlength="10" placeholder="z. B. 60">
+          </label>
+          <label>Zustand
+            <select id="f-zustand">
+              <option value="egal">egal</option>
+              <option value="gebraucht">gebraucht</option>
+              <option value="neu">neu</option>
+            </select>
+          </label>
+        </div>
+        <label>Ausschlusswörter <span class="small">(mit Komma trennen)</span>
+          <input id="f-aus" maxlength="400" placeholder="defekt, Damen, Ersatzteil">
+        </label>
+        <label>Muss im Titel stehen <span class="small">(optional, mit Komma)</span>
+          <input id="f-muss" maxlength="400" placeholder="z. B. 12x142">
+        </label>
+        <label class="check"><input id="f-aktiv" type="checkbox" checked> aktiv (wird gesucht)</label>
+        <div class="row">
+          <button id="btn-save" class="primary grow">Speichern</button>
+          <button id="btn-cancel">Abbrechen</button>
+        </div>
+        <button id="btn-delete" class="danger linkish hidden">Teil löschen</button>
+      </section>
+    </div>
 
-    <footer class="small">Keine Konten, keine Tracker. Diese Seite speichert nichts außer dem Push-Abo im Browser.</footer>
+    <!-- ===================== Gerät & Push ===================== -->
+    <div id="view-geraet" class="hidden">
+      <section class="card">
+        <h2>Push-Status</h2>
+        <p id="status">Wird geprüft …</p>
+      </section>
+
+      <section class="card hidden" id="ios-hint">
+        <h2>iPhone/iPad</h2>
+        <p>Push geht auf iOS nur, wenn die Seite als App installiert ist:
+           Teilen-Symbol → <b>„Zum Home-Bildschirm“</b>, dann die App vom Home-Bildschirm aus öffnen.</p>
+      </section>
+
+      <section class="card" id="setup-card">
+        <h2>Benachrichtigungen aktivieren</h2>
+        <p>Einmal auf jedem Gerät, auf dem du Alarme bekommen willst.</p>
+        <button id="btn-enable" class="primary">Benachrichtigungen aktivieren</button>
+      </section>
+
+      <section class="card hidden" id="code-card">
+        <h2>Abo-Code für den PC</h2>
+        <p>Am PC mit <code>py -3.13 alarm.py --abo-hinzufuegen</code> einfügen.
+           Nur zusammen mit dem geheimen Schlüssel auf dem PC nutzbar, trotzdem nicht öffentlich posten.</p>
+        <textarea id="code" readonly rows="5"></textarea>
+        <div class="row">
+          <button id="btn-copy">Kopieren</button>
+          <button id="btn-share" class="hidden">Teilen …</button>
+        </div>
+        <p class="small" id="copy-msg"></p>
+      </section>
+
+      <section class="card hidden" id="tools-card">
+        <h2>Werkzeuge</h2>
+        <div class="row">
+          <button id="btn-local-test">Anzeige testen</button>
+          <button id="btn-disable" class="danger">Push abmelden</button>
+        </div>
+        <p class="small">„Anzeige testen“ prüft nur, ob dieses Gerät Benachrichtigungen anzeigt.
+           Ob der PC durchkommt, testest du mit <code>py -3.13 alarm.py --test-push</code>.</p>
+      </section>
+
+      <section class="card hidden" id="gh-card">
+        <h2>Teileliste</h2>
+        <p class="small">Verbunden mit <code id="repo-name-2"></code>.</p>
+        <button id="btn-disconnect" class="danger">Zugangsschlüssel von diesem Gerät löschen</button>
+      </section>
+    </div>
+
+    <footer class="small">Keine Konten, keine Tracker. Gespeichert wird nur auf diesem Gerät und in deinem privaten Repo.</footer>
   </main>
   <script src="config.js"></script>
   <script src="app.js"></script>
